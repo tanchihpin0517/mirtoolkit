@@ -37,3 +37,7 @@ test = ["coverage"]
 "Bug Reports" = "https://github.com/tanchihpin0517/mirtoolkit/issues"
 "Source" = "https://github.com/tanchihpin0517/mirtoolkit"
 
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
