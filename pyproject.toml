@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools"]  # REQUIRED if [build-system] table is used
+build-backend = "setuptools.build_meta"  # If not defined, then legacy behavior can happen.
+
+
+[project]
+name = "mirtoolkit"  # REQUIRED, is the only field that cannot be marked as dynamic.
+version = "0.0.1"  # REQUIRED, although can be dynamic
+description = "A nice toolkit for MIR tasks"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE.txt"}
+keywords = ["MIR", "toolkit"]
+authors = [
+  {name = "Chih-Pin Tan", email = "tanchihpin0517@gmail.com" }
+]
+maintainers = [
+  {name = "Chih-Pin Tan", email = "tanchihpin0517@gmail.com" }
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: Unix",
+  "Programming Language :: Python :: 3 :: Only",
+]
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[project.optional-dependencies]
+dev = ["check-manifest"]
+test = ["coverage"]
+
+[project.urls]
+"Homepage" = "https://github.com/tanchihpin0517/mirtoolkit"
+"Bug Reports" = "https://github.com/tanchihpin0517/mirtoolkit/issues"
+"Source" = "https://github.com/tanchihpin0517/mirtoolkit"
+
