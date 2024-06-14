@@ -65,6 +65,47 @@ SPLEETER_CONFIG = {
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
+_instance_separator = None
+_instance_models = None
+
+
+def _get_separator():
+    global _instance_separator
+    if _instance_separator is None:
+        _instance_separator = Separator('spleeter:5stems')
+    return _instance_separator
+
+
+def _get_models():
+    global _instance_models
+    if _instance_models is None:
+        # Initialize Beat Transformer to estimate (down-)beat activation from demixed input
+        model = Demixed_DilatedTransformerModel(
+            attn_len=5, instr=5, ntoken=2,
+            dmodel=256, nhead=8, d_hid=1024,
+            nlayers=9, norm_first=True
+        )
+        model.load_state_dict(
+            torch.load(PARAM_PATH[FOLD], map_location=torch.device('cpu'))['state_dict'])
+        model.eval()
+
+        # Initialize DBN Beat Tracker to locate beats from beat activation
+        beat_tracker = DBNBeatTrackingProcessor(
+            min_bpm=55.0, max_bpm=215.0, fps=44100 / 1024,
+            transition_lambda=100, observation_lambda=6,
+            num_tempi=None, threshold=0.2,
+        )
+
+        # Initialize DBN Downbeat Tracker to locate downbeats from downbeat activation
+        downbeat_tracker = DBNDownBeatTrackingProcessor(
+            beats_per_bar=[3, 4],
+            min_bpm=55.0, max_bpm=215.0, fps=44100 / 1024,
+            transition_lambda=100, observation_lambda=6,
+            num_tempi=None, threshold=0.2,
+        )
+
+        _instance_models = (model, beat_tracker, downbeat_tracker)
+    return _instance_models
 
 
 def _init():
@@ -153,36 +194,13 @@ def _stft(
 @torch.no_grad()
 def detect_beat(audio_file):
     # Initialize Spleeter for pre-processing (demixing)
-    separator = Separator('spleeter:5stems')
+    separator = _get_separator()
     mel_f = librosa.filters.mel(sr=44100, n_fft=4096, n_mels=128, fmin=30, fmax=11000).T
     audio_loader = AudioAdapter.default()
 
-    # Initialize Beat Transformer to estimate (down-)beat activation from demixed input
-    model = Demixed_DilatedTransformerModel(
-        attn_len=5, instr=5, ntoken=2,
-        dmodel=256, nhead=8, d_hid=1024,
-        nlayers=9, norm_first=True
-    )
-    model.load_state_dict(
-        torch.load(PARAM_PATH[FOLD], map_location=torch.device('cpu'))['state_dict'])
+    model, beat_tracker, downbeat_tracker = _get_models()
     if torch.cuda.is_available():
         model.cuda()
-    model.eval()
-
-    # Initialize DBN Beat Tracker to locate beats from beat activation
-    beat_tracker = DBNBeatTrackingProcessor(
-        min_bpm=55.0, max_bpm=215.0, fps=44100 / 1024,
-        transition_lambda=100, observation_lambda=6,
-        num_tempi=None, threshold=0.2,
-    )
-
-    # Initialize DBN Downbeat Tracker to locate downbeats from downbeat activation
-    downbeat_tracker = DBNDownBeatTrackingProcessor(
-        beats_per_bar=[3, 4],
-        min_bpm=55.0, max_bpm=215.0, fps=44100 / 1024,
-        transition_lambda=100, observation_lambda=6,
-        num_tempi=None, threshold=0.2,
-    )
 
     waveform, _ = audio_loader.load(audio_file, sample_rate=44100)
     x = separator.separate(waveform)
