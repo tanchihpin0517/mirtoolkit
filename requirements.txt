@@ -1,6 +1,6 @@
 torch
 torchaudio
-numpy
+numpy<2
 madmom @ git+https://github.com/CPJKU/madmom.git@0551aa8f48d71a367d92b5d3a347a0cf7cd97cc9
 librosa
 spleeter
