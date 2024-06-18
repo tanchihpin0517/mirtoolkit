@@ -7,8 +7,7 @@ def download(url, file):
         response = requests.get(url)
         response.raise_for_status()  # Raise an error for bad status codes
 
-        # Write the content to the temporary file
-        file.write(response.content)
-        file.seek(0)  # Rewind the file to the beginning
+        with open(file, "wb") as f:
+            f.write(response.content)
     except requests.RequestException as e:
         print(f"An error occurred: {e}")
