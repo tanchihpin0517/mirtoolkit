@@ -11,5 +11,5 @@ def test_transcribe():
     audio_file = tempfile.NamedTemporaryFile(suffix=".mp3")
     output_midi_file = tempfile.NamedTemporaryFile(suffix=".mid")
 
-    utils.download(download_link, audio_file)
+    utils.download(download_link, audio_file.name)
     bytedance_piano_transcription.transcribe(audio_file.name, output_midi_file.name)
