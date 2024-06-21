@@ -4,7 +4,8 @@ import numpy as np
 from scipy.signal.windows import hann
 import librosa
 import torch
-from librosa.core import stft, istft
+from librosa.core import stft as librosa_stft
+from librosa.core import istft as librosa_istft
 from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
 from madmom.features.beats import DBNBeatTrackingProcessor
@@ -143,7 +144,7 @@ _init()
 from DilatedTransformer import Demixed_DilatedTransformerModel
 
 
-def _stft(
+def stft(
     data: np.ndarray, inverse: bool = False, length: Optional[int] = None
 ) -> np.ndarray:
     """
@@ -171,7 +172,7 @@ def _stft(
     N = SPLEETER_CONFIG["frame_length"]
     H = SPLEETER_CONFIG["frame_step"]
     win = hann(N, sym=False)
-    fstft = istft if inverse else stft
+    fstft = librosa_istft if inverse else librosa_stft
     win_len_arg = {"win_length": None, "length": None} if inverse else {"n_fft": N}
     n_channels = data.shape[-1]
     out = []
@@ -204,7 +205,7 @@ def detect_beat(audio_file):
 
     waveform, _ = audio_loader.load(audio_file, sample_rate=44100)
     x = separator.separate(waveform)
-    x = np.stack([np.dot(np.abs(np.mean(_stft(x[key]), axis=-1))**2, mel_f) for key in x])
+    x = np.stack([np.dot(np.abs(np.mean(stft(x[key]), axis=-1))**2, mel_f) for key in x])
     x = np.transpose(x, (0, 2, 1))
     x = np.stack([librosa.power_to_db(x[i], ref=np.max) for i in range(len(x))])
     x = np.transpose(x, (0, 2, 1))
