@@ -168,7 +168,7 @@ def stft(
 
 
 @torch.no_grad()
-def detect_beat(audio_file):
+def detect_beat(audio_file, window_size=8000):
     # Initialize Spleeter for pre-processing (demixing)
     separator = _get_separator()
     mel_f = librosa.filters.mel(sr=44100, n_fft=4096, n_mels=128, fmin=30, fmax=11000).T
@@ -184,10 +184,17 @@ def detect_beat(audio_file):
     x = np.transpose(x, (0, 2, 1))
     x = np.stack([librosa.power_to_db(x[i], ref=np.max) for i in range(len(x))])
     x = np.transpose(x, (0, 2, 1))
+    del waveform
 
-    with torch.no_grad():
-        model_input = torch.from_numpy(x).unsqueeze(0).float().cuda()
-        activation, _ = model(model_input)
+    # step with 8000 (paper's training setting)
+    num_frames = x.shape[1]
+    activation = []
+    for i in range(0, num_frames, window_size):
+        start, end = i, min(i + window_size, num_frames)
+        model_input = torch.from_numpy(x[:, start:end, :]).unsqueeze(0).float().cuda()
+        activation_frame, _ = model(model_input)
+        activation.append(activation_frame.detach().cpu())
+    activation = torch.cat(activation, dim=1)
 
     beat_activation = torch.sigmoid(activation[0, :, 0]).detach().cpu().numpy()
     downbeat_activation = torch.sigmoid(activation[0, :, 1]).detach().cpu().numpy()
