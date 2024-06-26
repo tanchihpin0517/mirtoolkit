@@ -1,4 +1,4 @@
-from mirtoolkit import spleeter, utils, beat_transformer
+from mirtoolkit import spleeter, utils
 import tempfile
 
 
@@ -17,5 +17,4 @@ def test_separate():
 
 
 if __name__ == "__main__":
-    # Parallel(n_jobs=1)(delayed(test_separate)() for _ in range(128))
     test_separate()

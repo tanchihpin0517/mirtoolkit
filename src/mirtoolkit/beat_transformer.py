@@ -1,4 +1,3 @@
-import subprocess
 import logging
 import numpy as np
 from scipy.signal.windows import hann
@@ -11,15 +10,13 @@ from spleeter.separator import Separator
 from madmom.features.beats import DBNBeatTrackingProcessor
 from madmom.features.downbeats import DBNDownBeatTrackingProcessor
 from typing import Optional
+from beat_transformer import DemixedDilatedTransformerModel
 
-from .config import PROJ_DIR, SYS_PATH_DIR
+from .config import PROJ_DIR
+from .utils import download
 
 REPO_DIR = PROJ_DIR.joinpath("beat_transformer")
-TGT_COMMIT = "063667fc9e4e11507f9d76dc1154d9db953a85eb"
-CODE_FILES = [
-    REPO_DIR / "code" / "DilatedTransformer.py",
-    REPO_DIR / "code" / "DilatedTransformerLayer.py",
-]
+REPO_URL = "https://github.com/tanchihpin0517/mirtoolkit_beat_transformer/raw/main"
 FOLD = 4
 PARAM_PATH = {
     0: REPO_DIR / "checkpoint/fold_0_trf_param.pt",
@@ -70,6 +67,19 @@ _instance_separator = None
 _instance_models = None
 
 
+def _download_checkpoint():
+    for key, path in PARAM_PATH.items():
+        if path.exists():
+            continue
+        path.parent.mkdir(parents=True, exist_ok=True)
+        logger.warn(f"Downloading checkpoint for fold {key}...")
+        url = f"{REPO_URL}/checkpoint/fold_{key}_trf_param.pt"
+        download(url, path)
+
+
+_download_checkpoint()
+
+
 def _get_separator():
     global _instance_separator
     if _instance_separator is None:
@@ -81,7 +91,7 @@ def _get_models():
     global _instance_models
     if _instance_models is None:
         # Initialize Beat Transformer to estimate (down-)beat activation from demixed input
-        model = Demixed_DilatedTransformerModel(
+        model = DemixedDilatedTransformerModel(
             attn_len=5, instr=5, ntoken=2,
             dmodel=256, nhead=8, d_hid=1024,
             nlayers=9, norm_first=True
@@ -107,41 +117,6 @@ def _get_models():
 
         _instance_models = (model, beat_tracker, downbeat_tracker)
     return _instance_models
-
-
-def _init():
-    if not REPO_DIR.exists():
-        logger.warn(
-            f"Cloning Beat-Transformer repository to \"{REPO_DIR}\"...")
-        subprocess.run([
-            "git",
-            "clone",
-            "https://github.com/zhaojw1998/Beat-Transformer.git",
-            str(REPO_DIR)
-        ])
-    # make sure the repository is at the target commit
-    cur_commit = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        stdout=subprocess.PIPE,
-        cwd=REPO_DIR
-    ).stdout.decode().strip()
-    if cur_commit != TGT_COMMIT:
-        logger.warn(f"Find unmatched commit hash: {cur_commit}")
-        logger.warn(f"Check out to target commit: {TGT_COMMIT}")
-        subprocess.run(["git", "fetch"], cwd=REPO_DIR)
-        subprocess.run(["git", "checkout", TGT_COMMIT], cwd=REPO_DIR)
-    # link code files to sys_path_dir
-    for file in CODE_FILES:
-        tgt_file = SYS_PATH_DIR.joinpath(file.name)
-        if not tgt_file.exists():
-            logger.warn(f"Link {file} to {tgt_file}")
-            tgt_file.symlink_to(file)
-
-
-_init()
-
-
-from DilatedTransformer import Demixed_DilatedTransformerModel
 
 
 def stft(
