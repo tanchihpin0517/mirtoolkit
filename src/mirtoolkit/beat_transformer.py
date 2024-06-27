@@ -68,13 +68,13 @@ _instance_models = None
 
 
 def _download_checkpoint():
-    for key, path in PARAM_PATH.items():
-        if path.exists():
-            continue
-        path.parent.mkdir(parents=True, exist_ok=True)
-        logger.warn(f"Downloading checkpoint for fold {key}...")
-        url = f"{REPO_URL}/checkpoint/fold_{key}_trf_param.pt"
-        download(url, path)
+    path = PARAM_PATH[FOLD]
+    if path.exists():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    logger.warn(f"Downloading checkpoint for fold {FOLD}...")
+    url = f"{REPO_URL}/checkpoint/fold_{FOLD}_trf_param.pt"
+    download(url, path)
 
 
 _download_checkpoint()
