@@ -1,5 +1,5 @@
 import torch
-from piano_transcription_inference import PianoTranscription, sample_rate, load_audio
+from piano_transcription_inference import PianoTranscription, sample_rate, load_audio_stream
 
 
 _instance = None
@@ -15,7 +15,7 @@ def _get_model(device):  # singleton
 @torch.no_grad()
 def transcribe(audio_file, output_midi_file=None, device=None):
     # Load audio
-    (audio, _) = load_audio(audio_file, sr=sample_rate, mono=True)
+    audio_stream = load_audio_stream(audio_file, sr=sample_rate, mono=True)
 
     # Transcriptor
     if device is None:
@@ -23,8 +23,6 @@ def transcribe(audio_file, output_midi_file=None, device=None):
     transcriptor = _get_model(device)  # device: 'cuda' | 'cpu'
 
     # Transcribe and write out to MIDI file
-    if output_midi_file is None:
-        output_midi_file = "/dev/null"
-    transcribed_dict = transcriptor.transcribe(audio, output_midi_file)
+    transcribed_dict = transcriptor.transcribe_stream(audio_stream, output_midi_file)
 
     return transcribed_dict

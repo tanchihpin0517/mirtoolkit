@@ -13,3 +13,7 @@ def test_transcribe():
 
     utils.download(download_link, audio_file.name)
     bytedance_piano_transcription.transcribe(audio_file.name, output_midi_file.name)
+
+
+if __name__ == "__main__":
+    test_transcribe()
