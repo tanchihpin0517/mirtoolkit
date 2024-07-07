@@ -50,5 +50,5 @@ def _write_beat_demo(audio_file, beat_info, output_file):
 
 if __name__ == "__main__":
     test_audio = _get_test_audio()
-    beat, downbeat = beat_transformer.detect_beat(test_audio, window_size=500)
+    beat, downbeat = beat_transformer.detect_beat(test_audio, window_size=1000)
     _write_beat_demo(test_audio, (beat, downbeat), "./tests_output/beat_demo.wav")

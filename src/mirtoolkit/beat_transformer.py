@@ -1,4 +1,5 @@
 import logging
+import math
 from typing import Optional
 
 import librosa
@@ -182,27 +183,19 @@ def detect_beat(audio_file, window_size=1000):
     # Initialize Spleeter for pre-processing (demixing)
     separator = _get_separator()
     mel_f = librosa.filters.mel(sr=44100, n_fft=4096, n_mels=128, fmin=30, fmax=11000).T
-    # audio_loader = AudioAdapter.default()
+    audio_loader = AudioAdapter.default()
 
     model, beat_tracker, downbeat_tracker = _get_models()
     if torch.cuda.is_available():
         model.cuda()
 
-    orig_sr = librosa.get_samplerate(audio_file)
-    stream = librosa.stream(
-        audio_file,
-        block_length=window_size,
-        frame_length=SPLEETER_CONFIG["frame_length"] * 4,
-        hop_length=SPLEETER_CONFIG["frame_step"],
-        mono=False,
-    )
-
+    audio, _ = audio_loader.load(audio_file, sample_rate=44100)
     activation = []
+    hop_length = window_size * SPLEETER_CONFIG["frame_step"]
+    frame_length = hop_length + SPLEETER_CONFIG["frame_length"] * 4
 
-    for waveform in stream:
-        if orig_sr != 44100:
-            waveform = librosa.resample(waveform, orig_sr=orig_sr, target_sr=44100)
-        waveform = waveform.T
+    for i in range(0, len(audio), hop_length):
+        waveform = audio[i : i + frame_length]
         x = separator.separate(waveform)
         x = np.stack([np.dot(np.abs(np.mean(stft(x[key]), axis=-1)) ** 2, mel_f) for key in x])
         x = np.transpose(x, (0, 2, 1))
