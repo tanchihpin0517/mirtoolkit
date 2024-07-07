@@ -1,6 +1,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
 
+/tests_output/
+
 # spleeter's checkpoints
 /pretrained_models/
 

@@ -178,32 +178,41 @@ def stft(data: np.ndarray, inverse: bool = False, length: Optional[int] = None) 
 
 
 @torch.no_grad()
-def detect_beat(audio_file, window_size=8000):
+def detect_beat(audio_file, window_size=1000):
     # Initialize Spleeter for pre-processing (demixing)
     separator = _get_separator()
     mel_f = librosa.filters.mel(sr=44100, n_fft=4096, n_mels=128, fmin=30, fmax=11000).T
-    audio_loader = AudioAdapter.default()
+    # audio_loader = AudioAdapter.default()
 
     model, beat_tracker, downbeat_tracker = _get_models()
     if torch.cuda.is_available():
         model.cuda()
 
-    waveform, _ = audio_loader.load(audio_file, sample_rate=44100)
-    x = separator.separate(waveform)
-    x = np.stack([np.dot(np.abs(np.mean(stft(x[key]), axis=-1)) ** 2, mel_f) for key in x])
-    x = np.transpose(x, (0, 2, 1))
-    x = np.stack([librosa.power_to_db(x[i], ref=np.max) for i in range(len(x))])
-    x = np.transpose(x, (0, 2, 1))
-    del waveform
+    orig_sr = librosa.get_samplerate(audio_file)
+    stream = librosa.stream(
+        audio_file,
+        block_length=window_size,
+        frame_length=SPLEETER_CONFIG["frame_length"] * 4,
+        hop_length=SPLEETER_CONFIG["frame_step"],
+        mono=False,
+    )
 
-    # step with 8000 (paper's training setting)
-    num_frames = x.shape[1]
     activation = []
-    for i in range(0, num_frames, window_size):
-        start, end = i, min(i + window_size, num_frames)
-        model_input = torch.from_numpy(x[:, start:end, :]).unsqueeze(0).float().cuda()
+
+    for waveform in stream:
+        if orig_sr != 44100:
+            waveform = librosa.resample(waveform, orig_sr=orig_sr, target_sr=44100)
+        waveform = waveform.T
+        x = separator.separate(waveform)
+        x = np.stack([np.dot(np.abs(np.mean(stft(x[key]), axis=-1)) ** 2, mel_f) for key in x])
+        x = np.transpose(x, (0, 2, 1))
+        x = np.stack([librosa.power_to_db(x[i], ref=np.max) for i in range(len(x))])
+        x = np.transpose(x, (0, 2, 1))
+
+        model_input = torch.from_numpy(x[:, :window_size, :]).unsqueeze(0).float().cuda()
         activation_frame, _ = model(model_input)
         activation.append(activation_frame.detach().cpu())
+
     activation = torch.cat(activation, dim=1)
 
     beat_activation = torch.sigmoid(activation[0, :, 0]).detach().cpu().numpy()
