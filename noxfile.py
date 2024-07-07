@@ -23,9 +23,14 @@ nox.options.needs_version = ">= 2024.3.2"
 def lint(session):
     session.install("flake8")
     session.run(
-        "flake8", "--exclude", ".nox,*.egg,build,data",
-        "--max-line-length", "99",
-        "--select", "E,W,F", "."
+        "flake8",
+        "--exclude",
+        ".nox,*.egg,build,data",
+        "--max-line-length",
+        "99",
+        "--select",
+        "E,W,F",
+        ".",
     )
 
 

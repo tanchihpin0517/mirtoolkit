@@ -8,9 +8,9 @@ def test_separate():
 
     utils.download(download_link, audio_file.name)
     out = demucs.separate(audio_file.name)
-    assert len(out['separated']) == 4
-    for name in out['separated']:
-        stem = out['separated'][name]
+    assert len(out["separated"]) == 4
+    for name in out["separated"]:
+        stem = out["separated"][name]
         assert len(stem) == 2
 
 

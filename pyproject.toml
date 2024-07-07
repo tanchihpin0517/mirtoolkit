@@ -41,3 +41,6 @@ test = ["coverage"]
 pythonpath = [
   "src"
 ]
+
+[tool.black]
+line-length = 100

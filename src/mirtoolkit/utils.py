@@ -1,7 +1,8 @@
-import requests
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
+
+import requests
 
 
 def download(url, file):

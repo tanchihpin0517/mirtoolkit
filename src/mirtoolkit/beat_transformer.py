@@ -1,16 +1,17 @@
 import logging
-import numpy as np
-from scipy.signal.windows import hann
+from typing import Optional
+
 import librosa
+import numpy as np
 import torch
-from librosa.core import stft as librosa_stft
+from beat_transformer import DemixedDilatedTransformerModel
 from librosa.core import istft as librosa_istft
-from spleeter.audio.adapter import AudioAdapter
-from spleeter.separator import Separator
+from librosa.core import stft as librosa_stft
 from madmom.features.beats import DBNBeatTrackingProcessor
 from madmom.features.downbeats import DBNDownBeatTrackingProcessor
-from typing import Optional
-from beat_transformer import DemixedDilatedTransformerModel
+from scipy.signal.windows import hann
+from spleeter.audio.adapter import AudioAdapter
+from spleeter.separator import Separator
 
 from .config import PROJ_DIR
 from .utils import download
@@ -26,7 +27,7 @@ PARAM_PATH = {
     4: REPO_DIR / "checkpoint/fold_4_trf_param.pt",
     5: REPO_DIR / "checkpoint/fold_5_trf_param.pt",
     6: REPO_DIR / "checkpoint/fold_6_trf_param.pt",
-    7: REPO_DIR / "checkpoint/fold_7_trf_param.pt"
+    7: REPO_DIR / "checkpoint/fold_7_trf_param.pt",
 }
 SPLEETER_CONFIG = {
     "train_csv": "path/to/train.csv",
@@ -53,11 +54,8 @@ SPLEETER_CONFIG = {
     "save_summary_steps": 5,
     "model": {
         "type": "unet.softmax_unet",
-        "params": {
-            "conv_activation": "ELU",
-            "deconv_activation": "ELU"
-        }
-    }
+        "params": {"conv_activation": "ELU", "deconv_activation": "ELU"},
+    },
 }
 
 
@@ -83,7 +81,7 @@ _download_checkpoint()
 def _get_separator():
     global _instance_separator
     if _instance_separator is None:
-        _instance_separator = Separator('spleeter:5stems')
+        _instance_separator = Separator("spleeter:5stems")
     return _instance_separator
 
 
@@ -92,36 +90,48 @@ def _get_models():
     if _instance_models is None:
         # Initialize Beat Transformer to estimate (down-)beat activation from demixed input
         model = DemixedDilatedTransformerModel(
-            attn_len=5, instr=5, ntoken=2,
-            dmodel=256, nhead=8, d_hid=1024,
-            nlayers=9, norm_first=True
+            attn_len=5,
+            instr=5,
+            ntoken=2,
+            dmodel=256,
+            nhead=8,
+            d_hid=1024,
+            nlayers=9,
+            norm_first=True,
         )
         model.load_state_dict(
-            torch.load(PARAM_PATH[FOLD], map_location=torch.device('cpu'))['state_dict'])
+            torch.load(PARAM_PATH[FOLD], map_location=torch.device("cpu"))["state_dict"]
+        )
         model.eval()
 
         # Initialize DBN Beat Tracker to locate beats from beat activation
         beat_tracker = DBNBeatTrackingProcessor(
-            min_bpm=55.0, max_bpm=215.0, fps=44100 / 1024,
-            transition_lambda=100, observation_lambda=6,
-            num_tempi=None, threshold=0.2,
+            min_bpm=55.0,
+            max_bpm=215.0,
+            fps=44100 / 1024,
+            transition_lambda=100,
+            observation_lambda=6,
+            num_tempi=None,
+            threshold=0.2,
         )
 
         # Initialize DBN Downbeat Tracker to locate downbeats from downbeat activation
         downbeat_tracker = DBNDownBeatTrackingProcessor(
             beats_per_bar=[3, 4],
-            min_bpm=55.0, max_bpm=215.0, fps=44100 / 1024,
-            transition_lambda=100, observation_lambda=6,
-            num_tempi=None, threshold=0.2,
+            min_bpm=55.0,
+            max_bpm=215.0,
+            fps=44100 / 1024,
+            transition_lambda=100,
+            observation_lambda=6,
+            num_tempi=None,
+            threshold=0.2,
         )
 
         _instance_models = (model, beat_tracker, downbeat_tracker)
     return _instance_models
 
 
-def stft(
-    data: np.ndarray, inverse: bool = False, length: Optional[int] = None
-) -> np.ndarray:
+def stft(data: np.ndarray, inverse: bool = False, length: Optional[int] = None) -> np.ndarray:
     """
     Single entrypoint for both stft and istft. This computes stft and
     istft with librosa on stereo data. The two channels are processed
@@ -159,7 +169,7 @@ def stft(
         )
         s = fstft(d, hop_length=H, window=win, center=False, **win_len_arg)
         if inverse:
-            s = s[N: N + length]
+            s = s[N : N + length]
         s = np.expand_dims(s.T, 2 - inverse)
         out.append(s)
     if len(out) == 1:
@@ -180,7 +190,7 @@ def detect_beat(audio_file, window_size=8000):
 
     waveform, _ = audio_loader.load(audio_file, sample_rate=44100)
     x = separator.separate(waveform)
-    x = np.stack([np.dot(np.abs(np.mean(stft(x[key]), axis=-1))**2, mel_f) for key in x])
+    x = np.stack([np.dot(np.abs(np.mean(stft(x[key]), axis=-1)) ** 2, mel_f) for key in x])
     x = np.transpose(x, (0, 2, 1))
     x = np.stack([librosa.power_to_db(x[i], ref=np.max) for i in range(len(x))])
     x = np.transpose(x, (0, 2, 1))
@@ -200,12 +210,15 @@ def detect_beat(audio_file, window_size=8000):
     downbeat_activation = torch.sigmoid(activation[0, :, 1]).detach().cpu().numpy()
     dbn_beat_pred = beat_tracker(beat_activation)
 
-    combined_act = np.concatenate((
-        np.maximum(beat_activation - downbeat_activation,
-                   np.zeros(beat_activation.shape)
-                   )[:, np.newaxis],
-        downbeat_activation[:, np.newaxis]
-    ), axis=-1)   # (T, 2)
+    combined_act = np.concatenate(
+        (
+            np.maximum(beat_activation - downbeat_activation, np.zeros(beat_activation.shape))[
+                :, np.newaxis
+            ],
+            downbeat_activation[:, np.newaxis],
+        ),
+        axis=-1,
+    )  # (T, 2)
     dbn_downbeat_pred = downbeat_tracker(combined_act)
     dbn_downbeat_pred = dbn_downbeat_pred[dbn_downbeat_pred[:, 1] == 1][:, 0]
 

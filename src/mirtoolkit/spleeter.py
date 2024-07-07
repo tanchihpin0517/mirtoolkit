@@ -6,7 +6,7 @@ from spleeter.separator import Separator
 _instance = None
 
 
-def _get_model(model_card='spleeter:5stems'):  # singleton
+def _get_model(model_card="spleeter:5stems"):  # singleton
     global _instance
     if _instance is None:
         print("Loading model...")

@@ -19,7 +19,7 @@ def transcribe(audio_file, output_midi_file=None, device=None):
 
     # Transcriptor
     if device is None:
-        device = 'cuda' if torch.cuda.is_available else 'cpu'
+        device = "cuda" if torch.cuda.is_available else "cpu"
     transcriptor = _get_model(device)  # device: 'cuda' | 'cpu'
 
     # Transcribe and write out to MIDI file
