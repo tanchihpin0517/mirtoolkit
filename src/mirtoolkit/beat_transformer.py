@@ -179,7 +179,7 @@ def stft(data: np.ndarray, inverse: bool = False, length: Optional[int] = None) 
 
 
 @torch.no_grad()
-def detect_beat(audio_file, window_size=1000):
+def detect_beat(audio_file, window_size=4000):
     # Initialize Spleeter for pre-processing (demixing)
     separator = _get_separator()
     mel_f = librosa.filters.mel(sr=44100, n_fft=4096, n_mels=128, fmin=30, fmax=11000).T
