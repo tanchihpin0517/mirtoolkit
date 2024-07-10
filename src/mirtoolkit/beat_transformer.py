@@ -1,5 +1,6 @@
 import logging
-import math
+import subprocess
+import tempfile
 from typing import Optional
 
 import librosa
@@ -179,23 +180,36 @@ def stft(data: np.ndarray, inverse: bool = False, length: Optional[int] = None) 
 
 
 @torch.no_grad()
-def detect_beat(audio_file, window_size=4000):
+def detect_beat(audio_file, window_size=4000, verbose=True):
     # Initialize Spleeter for pre-processing (demixing)
     separator = _get_separator()
-    mel_f = librosa.filters.mel(sr=44100, n_fft=4096, n_mels=128, fmin=30, fmax=11000).T
-    audio_loader = AudioAdapter.default()
+    sr = 44100
+    mel_f = librosa.filters.mel(sr=sr, n_fft=4096, n_mels=128, fmin=30, fmax=11000).T
+    # audio_loader = AudioAdapter.default()
 
     model, beat_tracker, downbeat_tracker = _get_models()
     if torch.cuda.is_available():
         model.cuda()
 
-    audio, _ = audio_loader.load(audio_file, sample_rate=44100)
     activation = []
-    hop_length = window_size * SPLEETER_CONFIG["frame_step"]
-    frame_length = hop_length + SPLEETER_CONFIG["frame_length"] * 4
 
-    for i in range(0, len(audio), hop_length):
-        waveform = audio[i : i + frame_length]
+    temp_audio = tempfile.NamedTemporaryFile(suffix=".flac")
+    subprocess.run(
+        ["ffmpeg", "-i", audio_file, "-ar", f"{sr}", "-f", "flac", "-y", temp_audio.name]
+    )
+
+    duration = librosa.get_duration(path=temp_audio.name)
+    total_frames = int(np.ceil(duration * sr / SPLEETER_CONFIG["frame_step"] / window_size))
+    stream = librosa.stream(
+        temp_audio.name,
+        block_length=window_size,
+        frame_length=SPLEETER_CONFIG["frame_length"] * 4,
+        hop_length=SPLEETER_CONFIG["frame_step"],
+        mono=False,
+    )
+
+    for i, waveform in enumerate(stream):
+        waveform = waveform.T
         x = separator.separate(waveform)
         x = np.stack([np.dot(np.abs(np.mean(stft(x[key]), axis=-1)) ** 2, mel_f) for key in x])
         x = np.transpose(x, (0, 2, 1))
@@ -205,6 +219,9 @@ def detect_beat(audio_file, window_size=4000):
         model_input = torch.from_numpy(x[:, :window_size, :]).unsqueeze(0).float().cuda()
         activation_frame, _ = model(model_input)
         activation.append(activation_frame.detach().cpu())
+
+        if verbose:
+            print(f"Processed {i+1}/{total_frames} frames", end="\r")
 
     activation = torch.cat(activation, dim=1)
 
