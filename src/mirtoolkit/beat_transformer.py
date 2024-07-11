@@ -250,9 +250,9 @@ def detect_beat(audio_file, window_size=4000, verbose=True):
 
     combined_act = np.concatenate(
         (
-            np.maximum(beat_activation - downbeat_activation, np.zeros(beat_activation.shape))[
-                :, np.newaxis
-            ],
+            np.maximum(
+                beat_activation - downbeat_activation, np.zeros(beat_activation.shape) + 1e-8
+            )[:, np.newaxis],
             downbeat_activation[:, np.newaxis],
         ),
         axis=-1,

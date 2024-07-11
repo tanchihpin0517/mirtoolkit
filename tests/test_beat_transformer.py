@@ -44,7 +44,7 @@ def _write_beat_demo(audio_file, beat_info, output_file):
         times=downbeat, sr=sr, click_freq=1500.0, click_duration=0.15, click=None, length=len(audio)
     )
 
-    out = 0.6 * audio + 0.25 * beats_click
+    out = 0.6 * audio + 0.25 * beats_click + 0.25 * downbeats_click
     sf.write(output_file, out, sr)
 
 
