@@ -193,23 +193,42 @@ def detect_beat(audio_file, window_size=4000, verbose=True):
 
     activation = []
 
-    temp_audio = tempfile.NamedTemporaryFile(suffix=".flac")
+    ext = "flac"
+    temp_audio = tempfile.NamedTemporaryFile(suffix=f".{ext}")
     subprocess.run(
-        ["ffmpeg", "-i", audio_file, "-ac", "2", "-ar", f"{sr}", "-f", "flac", "-y", temp_audio.name]
+        [
+            "ffmpeg",
+            "-i",
+            audio_file,
+            "-vn",
+            "-ac",
+            "2",
+            "-ar",
+            f"{sr}",
+            "-f",
+            ext,
+            "-y",
+            temp_audio.name,
+        ]
     )
 
     duration = librosa.get_duration(path=temp_audio.name)
     total_frames = int(np.ceil(duration * sr / SPLEETER_CONFIG["frame_step"] / window_size))
+    frame_length = SPLEETER_CONFIG["frame_length"] * 4
+    hop_length = SPLEETER_CONFIG["frame_step"]
     stream = librosa.stream(
         temp_audio.name,
         block_length=window_size,
-        frame_length=SPLEETER_CONFIG["frame_length"] * 4,
-        hop_length=SPLEETER_CONFIG["frame_step"],
+        frame_length=frame_length,
+        hop_length=hop_length,
         mono=False,
     )
+    expected_samples = (window_size - 1) * hop_length + frame_length
 
     for i, waveform in enumerate(stream):
         waveform = waveform.T
+        if waveform.shape[0] < expected_samples and i == 0:  # prevent unpredictable tailing values
+            waveform = waveform[: waveform.shape[0] + hop_length - frame_length]
         x = separator.separate(waveform)
         x = np.stack([np.dot(np.abs(np.mean(stft(x[key]), axis=-1)) ** 2, mel_f) for key in x])
         x = np.transpose(x, (0, 2, 1))
