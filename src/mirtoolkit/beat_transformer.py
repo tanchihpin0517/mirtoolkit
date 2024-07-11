@@ -195,7 +195,7 @@ def detect_beat(audio_file, window_size=4000, verbose=True):
 
     temp_audio = tempfile.NamedTemporaryFile(suffix=".flac")
     subprocess.run(
-        ["ffmpeg", "-i", audio_file, "-ar", f"{sr}", "-f", "flac", "-y", temp_audio.name]
+        ["ffmpeg", "-i", audio_file, "-ac", "2", "-ar", f"{sr}", "-f", "flac", "-y", temp_audio.name]
     )
 
     duration = librosa.get_duration(path=temp_audio.name)
