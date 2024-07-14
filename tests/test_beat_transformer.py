@@ -14,7 +14,7 @@ TEST_AUDIO_URL = "https://github.com/tanchihpin0517/mirtoolkit_beat_transformer/
 def _get_test_audio():
     test_audio = Path.home() / ".mirtoolkit/beat_transformer/test_audio.mp3"
     if not test_audio.exists():
-        download(TEST_AUDIO_URL, test_audio.name)
+        download(TEST_AUDIO_URL, test_audio)
     return test_audio
 
 
@@ -52,4 +52,5 @@ if __name__ == "__main__":
     test_audio = _get_test_audio()
     # beat, downbeat = beat_transformer.detect_beat(test_audio, window_size=1000)
     beat, downbeat = beat_transformer.detect_beat(test_audio)
+    Path("./tests_output").mkdir(exist_ok=True)
     _write_beat_demo(test_audio, (beat, downbeat), "./tests_output/beat_demo.wav")
