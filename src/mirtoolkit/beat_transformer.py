@@ -12,7 +12,6 @@ from librosa.core import stft as librosa_stft
 from madmom.features.beats import DBNBeatTrackingProcessor
 from madmom.features.downbeats import DBNDownBeatTrackingProcessor
 from scipy.signal.windows import hann
-from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
 
 from .config import PROJ_DIR
