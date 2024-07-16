@@ -20,7 +20,7 @@ def _get_test_audio():
 
 def test_detect_beat():
     test_audio = _get_test_audio()
-    beat, downbeat = beat_transformer.detect_beat(test_audio)
+    beat, downbeat = beat_transformer.detect(test_audio)
     assert isinstance(beat, np.ndarray) and isinstance(downbeat, np.ndarray)
 
 
@@ -29,7 +29,7 @@ def test_stft():
     download(TEST_AUDIO_URL, test_audio.name)
     y, _ = librosa.load(test_audio.name)
     y = y[:, None]
-    spectrogram = beat_transformer.stft(y)
+    spectrogram = beat_transformer._stft(y)
     assert isinstance(spectrogram, np.ndarray)
     assert len(spectrogram.shape) == 3
 
@@ -51,6 +51,6 @@ def _write_beat_demo(audio_file, beat_info, output_file):
 if __name__ == "__main__":
     test_audio = _get_test_audio()
     # beat, downbeat = beat_transformer.detect_beat(test_audio, window_size=1000)
-    beat, downbeat = beat_transformer.detect_beat(test_audio)
+    beat, downbeat = beat_transformer.detect(test_audio)
     Path("./tests_output").mkdir(exist_ok=True)
     _write_beat_demo(test_audio, (beat, downbeat), "./tests_output/beat_demo.wav")

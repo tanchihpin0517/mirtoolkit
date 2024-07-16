@@ -133,7 +133,7 @@ def _get_models():
     return _instance_models
 
 
-def stft(data: np.ndarray, inverse: bool = False, length: Optional[int] = None) -> np.ndarray:
+def _stft(data: np.ndarray, inverse: bool = False, length: Optional[int] = None) -> np.ndarray:
     """
     Single entrypoint for both stft and istft. This computes stft and
     istft with librosa on stereo data. The two channels are processed
@@ -180,7 +180,7 @@ def stft(data: np.ndarray, inverse: bool = False, length: Optional[int] = None) 
 
 
 @torch.no_grad()
-def detect_beat(audio_file, window_size=4000, verbose=True):
+def detect(audio_file, window_size=4000, verbose=True):
     # Initialize Spleeter for pre-processing (demixing)
     separator = _get_separator()
     sr = 44100
@@ -230,7 +230,7 @@ def detect_beat(audio_file, window_size=4000, verbose=True):
         if waveform.shape[0] < expected_samples and i == 0:  # prevent unpredictable tailing values
             waveform = waveform[: waveform.shape[0] + hop_length - frame_length]
         x = separator.separate(waveform)
-        x = np.stack([np.dot(np.abs(np.mean(stft(x[key]), axis=-1)) ** 2, mel_f) for key in x])
+        x = np.stack([np.dot(np.abs(np.mean(_stft(x[key]), axis=-1)) ** 2, mel_f) for key in x])
         x = np.transpose(x, (0, 2, 1))
         x = np.stack([librosa.power_to_db(x[i], ref=np.max) for i in range(len(x))])
         x = np.transpose(x, (0, 2, 1))
