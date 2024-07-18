@@ -4,7 +4,7 @@ numpy<2
 madmom @ git+https://github.com/CPJKU/madmom.git@0551aa8f48d71a367d92b5d3a347a0cf7cd97cc9
 librosa
 spleeter
-demucs @ git+https://github.com/facebookresearch/demucs.git
+demucs
 
 
 piano_transcription_inference @ git+https://github.com/tanchihpin0517/mirtoolkit_piano_transcription_inference.git@mirtoolkit
