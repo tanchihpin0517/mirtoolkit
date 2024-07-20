@@ -1,11 +1,12 @@
 torch
 torchaudio
 numpy<2
-madmom @ git+https://github.com/CPJKU/madmom.git@0551aa8f48d71a367d92b5d3a347a0cf7cd97cc9
+madmom @ git+https://github.com/CPJKU/madmom.git
 librosa
 spleeter
 demucs
-
+tqdm
 
 piano_transcription_inference @ git+https://github.com/tanchihpin0517/mirtoolkit_piano_transcription_inference.git@mirtoolkit
 beat_transformer @ git+https://github.com/tanchihpin0517/mirtoolkit_beat_transformer.git@mirtoolkit
+sheetsage @ git+https://github.com/tanchihpin0517/mirtoolkit_sheetsage.git@mirtoolkit
