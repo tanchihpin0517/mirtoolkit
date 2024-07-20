@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from typing import Union
 
-import sheetsage
+from sheetsage.infer import sheetsage as sheetsage_infer
 from tqdm import tqdm as tqdm_fn
 
 
@@ -60,7 +60,7 @@ def infer(
         )
         audio_path = Path(tmp_audio_file)
 
-    sheetsage_output = sheetsage.infer(
+    sheetsage_output = sheetsage_infer(
         audio_path_bytes_or_url=audio_path,
         segment_start_hint=segment_start_hint,
         segment_end_hint=segment_end_hint,
