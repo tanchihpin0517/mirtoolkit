@@ -13,7 +13,7 @@ def infer(
     audio_url: str = None,
     segment_start_hint=None,
     segment_end_hint=None,
-    use_jukebox=False,
+    use_jukebox=True,
     measures_per_chunk=8,
     dynamic_chunking=True,
     segment_hints_are_downbeats=False,
