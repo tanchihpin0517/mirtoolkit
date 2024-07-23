@@ -29,8 +29,8 @@ dynamic = ["dependencies"]
 dependencies = {file = ["requirements.txt"]}
 
 [project.optional-dependencies]
-dev = ["check-manifest"]
-test = ["coverage"]
+dev = ["check-manifest", "joblib"]
+test = ["coverage", "joblib"]
 
 [project.urls]
 "Homepage" = "https://github.com/tanchihpin0517/mirtoolkit"

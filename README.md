@@ -1,5 +1,7 @@
 # MIRtoolkit
 
+This project aims to provide an friendly interface for muisc information retrieval/research (MIR) tools.
+
 ## Modules
 
 ### SheetSage

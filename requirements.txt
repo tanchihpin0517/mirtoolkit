@@ -3,7 +3,7 @@ torchaudio
 numpy<2
 madmom @ git+https://github.com/CPJKU/madmom.git
 librosa
-spleeter
+spleeter>=2.4.0
 demucs
 tqdm
 
