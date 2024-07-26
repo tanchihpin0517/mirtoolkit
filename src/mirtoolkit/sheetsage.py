@@ -38,10 +38,25 @@ def infer(
     ), f"One of audio_path or audio_url should be provided but not both: {audio_path}, {audio_url}"
 
     if audio_path:  # if audio_path is provided
-        audio_path = Path(audio_path)
+        ext = "flac"
+        tmp_audio_file = tempfile.NamedTemporaryFile(suffix=f".{ext}")
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-i",
+                str(audio_path),
+                "-vn",
+                "-f",
+                ext,
+                "-y",
+                tmp_audio_file.name,
+            ]
+        )
+        audio_path = Path(tmp_audio_file.name)
+
         assert audio_path.exists(), f"File not found: {audio_path}"
     else:  # if audio_url is provided
-        ext = "mp3"
+        ext = "flac"
         tmp_dir = tempfile.TemporaryDirectory()
         tmp_audio_file = tmp_dir.name + f"/audio.{ext}"
         subprocess.run(
@@ -59,6 +74,8 @@ def infer(
             check=True,
         )
         audio_path = Path(tmp_audio_file)
+
+    print(f"audio_path: {audio_path}")
 
     sheetsage_output = sheetsage_infer(
         audio_path_bytes_or_url=audio_path,
