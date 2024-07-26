@@ -101,7 +101,10 @@ def _get_models():
             norm_first=True,
         )
         model.load_state_dict(
-            torch.load(PARAM_PATH[FOLD], map_location=torch.device("cpu"))["state_dict"]
+            torch.load(PARAM_PATH[FOLD], map_location=torch.device("cpu"), weights_only=False)[
+                "state_dict"
+            ],
+            weights_only=False,
         )
         model.eval()
 
