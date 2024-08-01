@@ -1,6 +1,6 @@
 torch>2
 torchaudio
-numpy<2
+numpy<3
 librosa
 demucs
 tqdm
