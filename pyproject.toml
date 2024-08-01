@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 # See https://setuptools.pypa.io/en/latest/userguide/quickstart.html for more project configuration options.
 name = "mirtoolkit"
 description = "A nice toolkit for MIR tasks"
-dynamic = ["version"]
+dynamic = ["version", "dependencies"]
 readme = "README.md"
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -17,9 +17,9 @@ authors = [
     {name = "Chih-Pin Tan", email = "tanchihpin0517@gmail.com"}
 ]
 requires-python = ">=3.8"
-dependencies = [
-  # Add your own dependencies here
-]
+# dependencies = [
+#   # Add your own dependencies here
+# ]
 license = {file = "LICENSE"}
 
 [project.urls]
@@ -68,6 +68,7 @@ mirtoolkit = ["py.typed"]
 
 [tool.setuptools.dynamic]
 version = {attr = "mirtoolkit.version.VERSION"}
+dependencies = {file = ["requirements.txt"]}
 
 [tool.black]
 line-length = 100

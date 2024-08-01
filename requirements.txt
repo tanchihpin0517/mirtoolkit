@@ -1,0 +1,12 @@
+torch
+torchaudio
+numpy<2
+madmom @ git+https://github.com/CPJKU/madmom.git
+librosa
+spleeter>=2.4.0
+demucs
+tqdm
+
+piano_transcription_inference @ git+https://github.com/tanchihpin0517/mirtoolkit_piano_transcription_inference.git@mirtoolkit
+beat_transformer @ git+https://github.com/tanchihpin0517/mirtoolkit_beat_transformer.git@mirtoolkit
+sheetsage @ git+https://github.com/tanchihpin0517/mirtoolkit_sheetsage.git@mirtoolkit
