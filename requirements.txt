@@ -8,3 +8,4 @@ tqdm
 piano_transcription_inference @ git+https://github.com/tanchihpin0517/mirtoolkit_piano_transcription_inference.git@mirtoolkit
 sheetsage @ git+https://github.com/tanchihpin0517/mirtoolkit_sheetsage.git@mirtoolkit
 beat_this @ https://github.com/CPJKU/beat_this/archive/main.zip
+madmom @ git+https://github.com/CPJKU/madmom.git
