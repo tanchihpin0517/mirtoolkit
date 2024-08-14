@@ -50,15 +50,15 @@ dev = [
     "packaging"
 ]
 
-[tool.setuptools.packages.find]
-exclude = [
-    "*.tests",
-    "*.tests.*",
-    "tests.*",
-    "tests",
-    "docs*",
-    "scripts*"
-]
+# [tool.setuptools.packages.find]
+# exclude = [
+#     "*.tests",
+#     "*.tests.*",
+#     "tests.*",
+#     "tests",
+#     "docs*",
+#     "scripts*"
+# ]
 
 [tool.setuptools]
 include-package-data = true
