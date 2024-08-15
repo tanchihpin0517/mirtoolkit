@@ -1,6 +1,9 @@
 import torch
-from piano_transcription_inference import PianoTranscription, sample_rate, load_audio_stream
-
+from piano_transcription_inference import (
+    PianoTranscription,
+    load_audio_stream,
+    sample_rate,
+)
 
 _instance = None
 

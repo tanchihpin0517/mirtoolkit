@@ -1,37 +1,53 @@
-from pathlib import Path
+import json
 
 import librosa
 import numpy as np
 import soundfile as sf
 
-from mirtoolkit import beat_this
+from mirtoolkit import beat_this, config
 from mirtoolkit.utils import download
 
-TEST_AUDIO_URL = "https://github.com/tanchihpin0517/mirtoolkit_beat_transformer/raw/main/test_audio/%E9%99%88%E4%BD%B3%20-%20%E6%84%9B%E3%81%95%E3%82%8C%E3%82%8B%E8%8A%B1%20%E6%84%9B%E3%81%95%E3%82%8C%E3%81%AC%E8%8A%B1%20(cover%20%E4%B8%AD%E5%B3%B6%E3%81%BF%E3%82%86%E3%81%8D).mp3"
+TEST_NAME = "beat_this"
+TEST_AUDIO_URL = "https://www.dropbox.com/scl/fi/ex0i7en6tq1fjtuwyctu4/cover.mp3?rlkey=kkptte4s0hl7r25lsaiza2yqi&st=nxkhfctv&dl=0"
+TEST_AUDIO = config.CACHE_DIR.joinpath(f"test_input/{TEST_NAME}/input.mp3")
+TEST_OUTPUT_AUDIO = config.CACHE_DIR.joinpath(f"test_output/{TEST_NAME}/output.wav")
+TEST_OUTPUT_BEAT = config.CACHE_DIR.joinpath(f"test_output/{TEST_NAME}/beat_info.json")
 
-
-def _get_test_audio():
-    test_audio = Path.home() / ".mirtoolkit/beat_transformer/test_audio.mp3"
-    if not test_audio.exists():
-        download(TEST_AUDIO_URL, test_audio)
-    return test_audio
+TEST_AUDIO.parent.mkdir(exist_ok=True, parents=True)
+TEST_OUTPUT_AUDIO.parent.mkdir(exist_ok=True, parents=True)
 
 
 def test_detect_beat():
     test_audio = _get_test_audio()
     beats, downbeats = beat_this.detect(test_audio)
-    assert isinstance(beat, np.ndarray) and isinstance(downbeat, np.ndarray)
+    assert isinstance(beats, np.ndarray) and isinstance(downbeats, np.ndarray)
+    beat_info = {"beats": beats.tolist(), "downbeats": downbeats.tolist()}
+    TEST_OUTPUT_BEAT.parent.mkdir(exist_ok=True, parents=True)
+    TEST_OUTPUT_BEAT.write_text(json.dumps(beat_info, indent=4))
+    _write_beat_demo(test_audio, (beats, downbeats), TEST_OUTPUT_AUDIO)
     return beats, downbeats
+
+
+def _get_test_audio():
+    TEST_AUDIO.parent.mkdir(exist_ok=True, parents=True)
+    if not TEST_AUDIO.exists():
+        download(TEST_AUDIO_URL, TEST_AUDIO)
+    return TEST_AUDIO
 
 
 def _write_beat_demo(audio_file, beat_info, output_file):
     audio, sr = librosa.load(audio_file)
-    beat, downbeat = beat_info
+    beats, downbeats = beat_info
     beats_click = librosa.clicks(
-        times=beat, sr=sr, click_freq=1000.0, click_duration=0.1, click=None, length=len(audio)
+        times=beats, sr=sr, click_freq=1000.0, click_duration=0.1, click=None, length=len(audio)
     )
     downbeats_click = librosa.clicks(
-        times=downbeat, sr=sr, click_freq=1500.0, click_duration=0.15, click=None, length=len(audio)
+        times=downbeats,
+        sr=sr,
+        click_freq=1500.0,
+        click_duration=0.15,
+        click=None,
+        length=len(audio),
     )
 
     out = 0.6 * audio + 0.25 * beats_click + 0.25 * downbeats_click
@@ -40,7 +56,4 @@ def _write_beat_demo(audio_file, beat_info, output_file):
 
 if __name__ == "__main__":
     test_audio = _get_test_audio()
-    # beat, downbeat = beat_transformer.detect_beat(test_audio, window_size=1000)
-    beat, downbeat = test_detect_beat()
-    Path("./tests_output").mkdir(exist_ok=True)
-    _write_beat_demo(test_audio, (beat, downbeat), "./tests_output/beat_demo.wav")
+    beats, downbeats = test_detect_beat()

@@ -1,6 +1,5 @@
-import torch
 import demucs.api
-
+import torch
 
 _instance = None
 
@@ -21,3 +20,10 @@ def separate(audio_file):
         "separated": separated,
         "sr": separator.samplerate,
     }
+
+
+def save_audio(audio, file, samplerate=None):
+    separator = _get_model()
+    if samplerate is None:
+        samplerate = separator.samplerate
+    demucs.api.save_audio(audio, file, samplerate=samplerate)

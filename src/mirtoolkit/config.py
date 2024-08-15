@@ -1,12 +1,16 @@
-from pathlib import Path
 import sys
 
+import platformdirs
 
-PROJ_DIR = Path.home().joinpath(".mirtoolkit")
-SYS_PATH_DIR = PROJ_DIR.joinpath("sys_path")
+_appname = "mirtoolkit"
+_appauthor = "mirtoolkit"
 
-if not PROJ_DIR.exists():
-    PROJ_DIR.mkdir()
+# CACHE_DIR = Path.home().joinpath(".mirtoolkit")
+CACHE_DIR = platformdirs.user_cache_path(_appname, _appauthor)
+SYS_PATH_DIR = CACHE_DIR.joinpath("sys_path")
+
+if not CACHE_DIR.exists():
+    CACHE_DIR.mkdir()
 if not SYS_PATH_DIR.exists():
     SYS_PATH_DIR.mkdir()
 if str(SYS_PATH_DIR) not in sys.path:

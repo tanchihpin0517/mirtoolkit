@@ -2,10 +2,11 @@ torch>2
 torchaudio
 numpy<2
 librosa
-demucs
 tqdm
+platformdirs
 
 piano_transcription_inference @ git+https://github.com/tanchihpin0517/mirtoolkit_piano_transcription_inference.git@mirtoolkit
 sheetsage @ git+https://github.com/tanchihpin0517/mirtoolkit_sheetsage.git@mirtoolkit
 beat_this @ https://github.com/CPJKU/beat_this/archive/main.zip
 madmom @ git+https://github.com/CPJKU/madmom.git
+demucs @ git+https://github.com/facebookresearch/demucs#egg=demucs

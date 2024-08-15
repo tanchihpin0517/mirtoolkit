@@ -1,8 +1,7 @@
 import shutil
+import subprocess
 import tempfile
 from pathlib import Path
-
-import requests
 
 
 def download(url, file):
@@ -12,15 +11,26 @@ def download(url, file):
         file = Path(file)
 
     try:
-        # Send a GET request to the URL
-        response = requests.get(url, stream=True)
-        response.raise_for_status()  # Raise an error for bad status codes
-
+        if shutil.which("wget") is None:
+            raise FileNotFoundError("wget not found. Please install wget.")
+        # Download the file using wget
         tmp_dir = tempfile.TemporaryDirectory()
         tmp_file = tmp_dir.name + "/" + file.name
-        with open(tmp_file, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+        subprocess.run(["wget", "-O", tmp_file, url], check=True)
         shutil.move(tmp_file, file)
-    except requests.RequestException as e:
+    except subprocess.CalledProcessError as e:
         print(f"An error occurred: {e}")
+
+    # try:
+    #     # Send a GET request to the URL
+    #     response = requests.get(url, stream=True)
+    #     response.raise_for_status()  # Raise an error for bad status codes
+
+    #     tmp_dir = tempfile.TemporaryDirectory()
+    #     tmp_file = tmp_dir.name + "/" + file.name
+    #     with open(tmp_file, "wb") as f:
+    #         for chunk in response.iter_content(chunk_size=8192):
+    #             f.write(chunk)
+    #     shutil.move(tmp_file, file)
+    # except requests.RequestException as e:
+    #     print(f"An error occurred: {e}")

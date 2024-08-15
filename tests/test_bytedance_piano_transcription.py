@@ -1,18 +1,21 @@
-from mirtoolkit import bytedance_piano_transcription, utils
-import tempfile
+from mirtoolkit import bytedance_piano_transcription, config, utils
+
+TEST_NAME = "bytedance_piano_transcription"
+TEST_AUDIO_URL = (
+    "https://raw.githubusercontent.com/"
+    "qiuqiangkong/piano_transcription_inference/master/resources/cut_liszt.mp3"
+)
+TEST_AUDIO = config.CACHE_DIR.joinpath(f"test_input/{TEST_NAME}/cut_liszt.mp3")
+TEST_OUTPUT_MIDI = config.CACHE_DIR.joinpath(f"test_output/{TEST_NAME}/output.mid")
+
+TEST_AUDIO.parent.mkdir(exist_ok=True, parents=True)
+TEST_OUTPUT_MIDI.parent.mkdir(exist_ok=True, parents=True)
 
 
 def test_transcribe():
-    # download input audio from link
-    download_link = (
-        "https://raw.githubusercontent.com/"
-        "qiuqiangkong/piano_transcription_inference/master/resources/cut_liszt.mp3"
-    )
-    audio_file = tempfile.NamedTemporaryFile(suffix=".mp3")
-    output_midi_file = tempfile.NamedTemporaryFile(suffix=".mid")
-
-    utils.download(download_link, audio_file.name)
-    bytedance_piano_transcription.transcribe(audio_file.name, output_midi_file.name)
+    if not TEST_AUDIO.exists():
+        utils.download(TEST_AUDIO_URL, TEST_AUDIO)
+    bytedance_piano_transcription.transcribe(TEST_AUDIO, TEST_OUTPUT_MIDI)
 
 
 if __name__ == "__main__":
