@@ -10,16 +10,13 @@ def download(url, file):
     if isinstance(file, str):
         file = Path(file)
 
-    try:
-        if shutil.which("wget") is None:
-            raise FileNotFoundError("wget not found. Please install wget.")
-        # Download the file using wget
-        tmp_dir = tempfile.TemporaryDirectory()
-        tmp_file = tmp_dir.name + "/" + file.name
-        subprocess.run(["wget", "-O", tmp_file, url], check=True)
-        shutil.move(tmp_file, file)
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred: {e}")
+    if shutil.which("wget") is None:
+        raise FileNotFoundError("wget not found. Please install wget.")
+    # Download the file using wget
+    tmp_dir = tempfile.TemporaryDirectory()
+    tmp_file = tmp_dir.name + "/" + file.name
+    subprocess.run(["wget", "-O", tmp_file, url], check=True)
+    shutil.move(tmp_file, file)
 
     # try:
     #     # Send a GET request to the URL

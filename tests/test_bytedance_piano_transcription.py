@@ -1,10 +1,7 @@
 from mirtoolkit import bytedance_piano_transcription, config, utils
 
 TEST_NAME = "bytedance_piano_transcription"
-TEST_AUDIO_URL = (
-    "https://raw.githubusercontent.com/"
-    "qiuqiangkong/piano_transcription_inference/master/resources/cut_liszt.mp3"
-)
+TEST_AUDIO_URL = "https://www.dropbox.com/scl/fi/hc38zoizq5515cczxv9l4/cut_liszt.mp3?rlkey=mzoknr0ma6sa0nen5zlseruch&st=o1vggmes&dl=0"
 TEST_AUDIO = config.CACHE_DIR.joinpath(f"test_input/{TEST_NAME}/cut_liszt.mp3")
 TEST_OUTPUT_MIDI = config.CACHE_DIR.joinpath(f"test_output/{TEST_NAME}/output.mid")
 

@@ -1,7 +1,7 @@
 from mirtoolkit import config, demucs, utils
 
 TEST_NAME = "demucs"
-TEST_AUDIO_URL = "https://github.com/facebookresearch/demucs/raw/main/test.mp3"
+TEST_AUDIO_URL = "https://www.dropbox.com/scl/fi/zj68yghtn0cwtwnqj7vrx/pop.00000.wav?rlkey=bejuh89wehbc8psl9ujmqa73u&st=im68h2jp&dl=0"
 TEST_AUDIO = config.CACHE_DIR.joinpath(f"test_input/{TEST_NAME}/test.mp3")
 TEST_OUTPUT_DIR = config.CACHE_DIR.joinpath(f"test_output/{TEST_NAME}")
 

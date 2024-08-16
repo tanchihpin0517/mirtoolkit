@@ -29,6 +29,13 @@ Changelog = "https://github.com/tanchihpin0517/mirtoolkit/blob/main/CHANGELOG.md
 # Documentation = "https://mirtoolkit.readthedocs.io/"
 
 [project.optional-dependencies]
+test = [
+    "pytest",
+    "build",
+    "setuptools",
+    "wheel",
+    "packaging"
+]
 dev = [
     "ruff",
     "mypy>=1.0,<1.12",
@@ -50,15 +57,8 @@ dev = [
     "packaging"
 ]
 
-# [tool.setuptools.packages.find]
-# exclude = [
-#     "*.tests",
-#     "*.tests.*",
-#     "tests.*",
-#     "tests",
-#     "docs*",
-#     "scripts*"
-# ]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools]
 include-package-data = true

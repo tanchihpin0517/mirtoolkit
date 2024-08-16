@@ -1,9 +1,16 @@
+import sys
+
 import torch
-from beat_this.inference import File2Beats
+
+if not sys.version_info < (3, 10):
+    from beat_this.inference import File2Beats
 
 
 @torch.no_grad()
 def detect(audio_file, dbn=True, cuda=None, verbose=True):
+    if sys.version_info < (3, 10):
+        raise ImportError("Python 3.10 or higher is required to use this function.")
+
     if cuda is None:
         cuda = torch.cuda.is_available()
 
