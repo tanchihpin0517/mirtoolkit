@@ -1,4 +1,5 @@
-from mirtoolkit import config, demucs, utils
+from mirtoolkit import config, utils
+from mirtoolkit.demucs import Demucs
 
 TEST_NAME = "demucs"
 TEST_AUDIO_URL = "https://www.dropbox.com/scl/fi/zj68yghtn0cwtwnqj7vrx/pop.00000.wav?rlkey=bejuh89wehbc8psl9ujmqa73u&st=im68h2jp&dl=0"
@@ -13,7 +14,8 @@ def test_separate():
     if not TEST_AUDIO.exists():
         utils.download(TEST_AUDIO_URL, TEST_AUDIO)
 
-    out = demucs.separate(TEST_AUDIO)  # origin, separated, sr
+    demucs = Demucs()
+    out = demucs(TEST_AUDIO)  # origin, separated, sr
     assert len(out["separated"]) == 4
     for name in out["separated"]:
         stem = out["separated"][name]
@@ -22,4 +24,6 @@ def test_separate():
 
 
 if __name__ == "__main__":
-    test_separate()
+    test_functions = [obj for name, obj in locals().items() if name.startswith("test_")]
+    for test_func in test_functions:
+        test_func()

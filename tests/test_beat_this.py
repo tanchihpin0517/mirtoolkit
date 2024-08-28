@@ -6,7 +6,8 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from mirtoolkit import beat_this, config
+from mirtoolkit import config
+from mirtoolkit.beat_this import BeatThis
 from mirtoolkit.utils import download
 
 TEST_NAME = "beat_this"
@@ -20,9 +21,23 @@ TEST_OUTPUT_AUDIO.parent.mkdir(exist_ok=True, parents=True)
 
 
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")
-def test_detect_beat():
+def test_file():
+    test_audio_file = _get_test_audio()
+    beat_tracker = BeatThis()
+    beats, downbeats = beat_tracker(test_audio_file)
+    assert isinstance(beats, np.ndarray) and isinstance(downbeats, np.ndarray)
+    beat_info = {"beats": beats.tolist(), "downbeats": downbeats.tolist()}
+    TEST_OUTPUT_BEAT.parent.mkdir(exist_ok=True, parents=True)
+    TEST_OUTPUT_BEAT.write_text(json.dumps(beat_info, indent=4))
+    _write_beat_demo(test_audio_file, (beats, downbeats), TEST_OUTPUT_AUDIO)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")
+def test_array():
     test_audio = _get_test_audio()
-    beats, downbeats = beat_this.detect(test_audio)
+    audio, sr = librosa.load(test_audio)
+    beat_tracker = BeatThis()
+    beats, downbeats = beat_tracker(audio, sr)
     assert isinstance(beats, np.ndarray) and isinstance(downbeats, np.ndarray)
     beat_info = {"beats": beats.tolist(), "downbeats": downbeats.tolist()}
     TEST_OUTPUT_BEAT.parent.mkdir(exist_ok=True, parents=True)
@@ -57,4 +72,6 @@ def _write_beat_demo(audio_file, beat_info, output_file):
 
 
 if __name__ == "__main__":
-    test_detect_beat()
+    test_functions = [obj for name, obj in locals().items() if name.startswith("test_")]
+    for test_func in test_functions:
+        test_func()

@@ -1,29 +1,37 @@
+"""
+Demus: Demixing model from Meta
+- reference: https://github.com/facebookresearch/demucs/tree/main
+"""
+
+from pathlib import Path
+
 import demucs.api
 import torch
 
-_instance = None
 
+class Demucs:
+    def __init__(self, cuda=None):
+        if cuda is None:
+            cuda = torch.cuda.is_available()
 
-def _get_model():  # singleton
-    global _instance
-    if _instance is None:
-        _instance = demucs.api.Separator()
-    return _instance
+        self.separator = demucs.api.Separator(
+            device="cuda" if cuda else "cpu",
+        )
 
+    @torch.no_grad()
+    def __call__(self, file_or_array):
+        if not isinstance(file_or_array, (str, Path)):
+            raise NotImplementedError("Array input is not supported yet.")
+        else:
+            audio_path = file_or_array
+        origin, separated = self.separator.separate_audio_file(audio_path)
+        return {
+            "origin": origin,
+            "separated": separated,
+            "sr": self.separator.samplerate,
+        }
 
-@torch.no_grad()
-def separate(audio_file):
-    separator = _get_model()
-    origin, separated = separator.separate_audio_file(audio_file)
-    return {
-        "origin": origin,
-        "separated": separated,
-        "sr": separator.samplerate,
-    }
-
-
-def save_audio(audio, file, samplerate=None):
-    separator = _get_model()
-    if samplerate is None:
-        samplerate = separator.samplerate
-    demucs.api.save_audio(audio, file, samplerate=samplerate)
+    def save_audio(self, audio, file, samplerate=None):
+        if samplerate is None:
+            samplerate = self.separator.samplerate
+        demucs.api.save_audio(audio, file, samplerate=samplerate)

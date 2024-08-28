@@ -7,7 +7,7 @@ import pytest
 from mirtoolkit import config, utils
 
 if sys.version_info < (3, 12):
-    from mirtoolkit import sheetsage
+    from mirtoolkit.sheetsage import SheetSage
 
 TEST_NAME = "sheetsage"
 TEST_AUDIO_URL = "https://www.dropbox.com/scl/fi/zj68yghtn0cwtwnqj7vrx/pop.00000.wav?rlkey=bejuh89wehbc8psl9ujmqa73u&st=im68h2jp&dl=0"
@@ -23,7 +23,8 @@ def test_sheetsage():
     logging.basicConfig(level=logging.INFO)
     audio_file, beat_info_file = _get_test_inputs()
     beat_info = json.loads(beat_info_file.read_text())
-    sheetsage.infer(
+    sheetsage = SheetSage()
+    sheetsage(
         audio_path=audio_file,
         use_jukebox=True,
         beat_information=beat_info,
@@ -40,4 +41,6 @@ def _get_test_inputs():
 
 
 if __name__ == "__main__":
-    test_sheetsage()
+    test_functions = [obj for name, obj in locals().items() if name.startswith("test_")]
+    for test_func in test_functions:
+        test_func()
