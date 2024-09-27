@@ -36,26 +36,26 @@ test = [
     "wheel",
     "packaging"
 ]
-dev = [
-    "ruff",
-    "mypy>=1.0,<1.12",
-    "black>=23.0,<25.0",
-    "isort>=5.12,<5.14",
-    "pytest",
-    "pytest-sphinx",
-    "pytest-cov",
-    "twine>=1.11.0",
-    "build",
-    "setuptools",
-    "wheel",
-    "Sphinx>=4.3.0,<8.1.0",
-    "furo==2024.8.6",
-    "myst-parser>=1.0,<4.1",
-    "sphinx-copybutton==0.5.2",
-    "sphinx-autobuild==2024.9.19",
-    "sphinx-autodoc-typehints==2.4.4",
-    "packaging"
-]
+# dev = [
+#     "ruff",
+#     "mypy>=1.0,<1.12",
+#     "black>=23.0,<25.0",
+#     "isort>=5.12,<5.14",
+#     "pytest",
+#     "pytest-sphinx",
+#     "pytest-cov",
+#     "twine>=1.11.0",
+#     "build",
+#     "setuptools",
+#     "wheel",
+#     "Sphinx>=4.3.0,<8.1.0",
+#     "furo==2024.8.6",
+#     "myst-parser>=1.0,<4.1",
+#     "sphinx-copybutton==0.5.2",
+#     "sphinx-autobuild==2024.9.19",
+#     "sphinx-autodoc-typehints==2.4.4",
+#     "packaging"
+# ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
