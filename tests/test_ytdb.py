@@ -7,7 +7,7 @@ from mirtoolkit import config, ytdb
 TEST_NAME = "ytdb"
 TEST_INPUT_FILE = config.CACHE_DIR.joinpath(f"test_input/{TEST_NAME}/id_file.txt")
 TEST_OUTPUT_DIR = config.CACHE_DIR.joinpath(f"test_output/{TEST_NAME}/downloaded")
-TEST_FAILED_FILE = config.CACHE_DIR.joinpath(f"test_output/{TEST_NAME}/failed.txt")
+TEST_FAILED_FILE = config.CACHE_DIR.joinpath(f"test_output/{TEST_NAME}/download_failed.txt")
 TEST_ID = "bnu2L29c0nM"
 
 TEST_INPUT_FILE.parent.mkdir(exist_ok=True, parents=True)
