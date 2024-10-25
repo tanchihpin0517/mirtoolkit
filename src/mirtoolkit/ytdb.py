@@ -394,14 +394,16 @@ def main():
     args = parser.parse_args()
 
     if args.command == "download":
-        if args.input == "file" and args.id_file is None:
-            download_parser.print_help()
-            print("Please provide a file containing YouTube IDs")
-            exit(1)
-        elif args.input == "args" and not args.args:
-            download_parser.print_help()
-            print("Please provide YouTube IDs or URLs")
-            exit(1)
+        if args.input == "file":
+            if args.id_file is None:
+                download_parser.print_help()
+                print("Please provide a file containing YouTube IDs")
+                exit(1)
+        elif args.input == "args":
+            if args.args is None:
+                download_parser.print_help()
+                print("Please provide YouTube IDs or URLs")
+                exit(1)
         elif args.input == "stdin":
             pass
         else:
