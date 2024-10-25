@@ -265,10 +265,9 @@ def _safely_write_manifest(manifest_file, manifest, indent=2):
 
 
 def _clean_save_dir(save_dir, manifest, tgt_type):
-    for file in save_dir.glob(f"{tgt_type}*"):
-        file.unlink()
-
     if save_dir.exists():
+        for file in save_dir.glob(f"{tgt_type}*"):
+            file.unlink()
         if len(list(save_dir.iterdir())) <= 1:  # only manifest.json left
             shutil.rmtree(save_dir)
 
