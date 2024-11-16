@@ -93,6 +93,8 @@ def cmd_download(args):
         failed_skip_type=failed_skip_types,
         verbose=args.verbose,
         cookies_file=args.cookies_file,
+        request_interval=args.request_interval,
+        download_interval=args.download_interval,
     )
 
 
@@ -149,6 +151,8 @@ def _download_wrapper(
     failed_skip_type,
     verbose=False,
     cookies_file=None,
+    request_interval=1,
+    download_interval=1,
 ):
     assert output_dir_root.exists(), f"Directory {output_dir_root} does not exist."
     failed_file.touch(exist_ok=True)
@@ -166,7 +170,15 @@ def _download_wrapper(
             continue
 
         try:
-            yt_id = _download(yt_id, tgt_type, output_dir_root, verbose, cookies_file=cookies_file)
+            yt_id = _download(
+                yt_id,
+                tgt_type,
+                output_dir_root,
+                verbose,
+                cookies_file=cookies_file,
+                request_interval=request_interval,
+                download_interval=download_interval,
+            )
         except DownloadFailedInvalidId as e:
             print(f"[{e.yt_id}] Invalid ID.")
         except (
@@ -232,7 +244,15 @@ def _get_download_cmd(
     return cmd
 
 
-def _download(yt_id, tgt_type, output_root_dir, verbose=False, cookies_file=None):
+def _download(
+    yt_id,
+    tgt_type,
+    output_root_dir,
+    verbose=False,
+    cookies_file=None,
+    request_interval=1,
+    download_interval=1,
+):
     if len(yt_id) < 4:
         raise DownloadFailedInvalidId(yt_id)
 
@@ -248,7 +268,14 @@ def _download(yt_id, tgt_type, output_root_dir, verbose=False, cookies_file=None
         if tgt_type in manifest["files"]:
             return yt_id
 
-        cmd = _get_download_cmd(tgt_type, yt_id, tmp_dir, cookies_file=cookies_file)
+        cmd = _get_download_cmd(
+            tgt_type,
+            yt_id,
+            tmp_dir,
+            cookies_file=cookies_file,
+            request_interval=request_interval,
+            download_interval=download_interval,
+        )
 
         subprocess.run(
             cmd,
@@ -449,6 +476,12 @@ def main():
     )
     download_parser.add_argument("-v", "--verbose", action="store_true")
     download_parser.add_argument("--cookies_file", type=Path, help="Path to the cookies file")
+    download_parser.add_argument(
+        "--request_interval", type=int, default=1, help="Request interval in seconds"
+    )
+    download_parser.add_argument(
+        "--download_interval", type=int, default=1, help="Download interval in seconds"
+    )
 
     # Sanity check subcommand
     sanity_check_parser = subparsers.add_parser(
