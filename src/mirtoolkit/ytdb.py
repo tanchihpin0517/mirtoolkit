@@ -4,7 +4,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from enum import Enum
 from pathlib import Path
 
 from tqdm import tqdm as _tqdm
@@ -18,16 +17,60 @@ def tqdm(*args, dynamic_ncols=True, **kwargs):
     )
 
 
-class DOWNLOAD_RESULT(Enum):
-    SUCCESS = "success"
-    EXIST = "exist"
-    INVALID_ID = "invalid_id"
-    FAILED_OTHER = "other"
-    FAILED_UNAVAILABLE = "unavailable"
-    FAILED_PRIVATE = "private"
-    FAILED_REMOVED = "removed"
-    FAILED_COPYRIGHT = "copyright"
-    FAILED_UNSUPPORTED = "unsupported"
+class DownloadFailedOther(Exception):
+    keyword = "other"
+
+    def __init__(self, yt_id):
+        self.yt_id = yt_id
+        super().__init__(f"Other error: {yt_id}")
+
+
+class DownloadFailedInvalidId(Exception):
+    keyword = "invalid_id"
+
+    def __init__(self, yt_id):
+        self.yt_id = yt_id
+        super().__init__(f"Invalid YouTube ID: {yt_id}")
+
+
+class DownloadFailedUnavailable(Exception):
+    keyword = "unavailable"
+
+    def __init__(self, yt_id):
+        self.yt_id = yt_id
+        super().__init__(f"Unavailable: {yt_id}")
+
+
+class DownloadFailedPrivate(Exception):
+    keyword = "private"
+
+    def __init__(self, yt_id):
+        self.yt_id = yt_id
+        super().__init__(f"Private: {yt_id}")
+
+
+class DownloadFailedRemoved(Exception):
+    keyword = "removed"
+
+    def __init__(self, yt_id):
+        self.yt_id = yt_id
+        super().__init__(f"Removed: {yt_id}")
+
+
+class DownloadFailedCopyright(Exception):
+    keyword = "copyright"
+
+    def __init__(self, yt_id):
+        self.yt_id = yt_id
+        super().__init__(f"Copyright: {yt_id}")
+
+
+class DownloadFailedUnsupported(Exception):
+    keyword = "unsupported"
+
+    def __init__(self, yt_id):
+        self.yt_id = yt_id
+        super().__init__(f"Unsupported: {yt_id}")
 
 
 class WeirdYtIdException(Exception):
@@ -49,6 +92,7 @@ def cmd_download(args):
         failed_file=args.failed_file,
         failed_skip_type=failed_skip_types,
         verbose=args.verbose,
+        cookies_file=args.cookies_file,
     )
 
 
@@ -104,6 +148,7 @@ def _download_wrapper(
     failed_file,
     failed_skip_type,
     verbose=False,
+    cookies_file=None,
 ):
     assert output_dir_root.exists(), f"Directory {output_dir_root} does not exist."
     failed_file.touch(exist_ok=True)
@@ -120,29 +165,25 @@ def _download_wrapper(
         if failed_type.get(yt_id) in failed_skip_type:
             continue
 
-        r, yt_id = _download(yt_id, tgt_type, output_dir_root, verbose)
-
-        if r == DOWNLOAD_RESULT.SUCCESS:
-            pass
-        elif r == DOWNLOAD_RESULT.EXIST:
-            pass
-        elif r == DOWNLOAD_RESULT.INVALID_ID:
-            print(f"[{yt_id}] Invalid ID.")
-        elif r in (
-            DOWNLOAD_RESULT.FAILED_REMOVED,
-            DOWNLOAD_RESULT.FAILED_UNAVAILABLE,
-            DOWNLOAD_RESULT.FAILED_PRIVATE,
-            DOWNLOAD_RESULT.FAILED_COPYRIGHT,
-            DOWNLOAD_RESULT.FAILED_UNSUPPORTED,
-            DOWNLOAD_RESULT.FAILED_OTHER,
-        ):
+        try:
+            yt_id = _download(yt_id, tgt_type, output_dir_root, verbose, cookies_file=cookies_file)
+        except DownloadFailedInvalidId as e:
+            print(f"[{e.yt_id}] Invalid ID.")
+        except (
+            DownloadFailedPrivate,
+            DownloadFailedRemoved,
+            DownloadFailedUnavailable,
+            DownloadFailedUnsupported,
+            DownloadFailedCopyright,
+            DownloadFailedOther,
+        ) as e:
             if yt_id not in failed_type:
-                failed_type[yt_id] = r.value
+                failed_type[yt_id] = e.keyword
                 with open(failed_file, "a") as f:
-                    f.write(f"{yt_id} {r.value}\n")
+                    f.write(f"{yt_id} {e.keyword}\n")
             else:
-                if failed_type[yt_id] != r.value:
-                    failed_type[yt_id] = r.value
+                if failed_type[yt_id] != e.keyword:
+                    failed_type[yt_id] = e.keyword
                     buf = []
                     for k, v in failed_type.items():
                         buf.append(f"{k} {v}\n")
@@ -153,34 +194,47 @@ def _get_save_dir(yt_id, db_root):
     return db_root / yt_id[0] / yt_id[1] / yt_id[2] / yt_id
 
 
-def _get_download_cmd(tgt_type, yt_id, tmp_dir):
+def _get_download_cmd(
+    tgt_type, yt_id, tmp_dir, cookies_file=None, request_interval=1, download_interval=1
+):
     if tgt_type == "audio":
-        return [
+        cmd = [
             "yt-dlp",
-            "--netrc",
             f"https://www.youtube.com/watch?v={yt_id}",
             "-f",
             "bestaudio",
             "--write-info-json",
             "--output",
             f"{tmp_dir.name}/{tgt_type}.%(ext)s",
+            "--sleep-requests",
+            str(request_interval),
+            "--sleep-interval",
+            str(download_interval),
         ]
     elif tgt_type == "video":
-        return [
+        cmd = [
             "yt-dlp",
-            "--netrc",
             f"https://www.youtube.com/watch?v={yt_id}",
             "--write-info-json",
             "--output",
             f"{tmp_dir.name}/{tgt_type}.%(ext)s",
+            "--sleep-requests",
+            str(request_interval),
+            "--sleep-interval",
+            str(download_interval),
         ]
     else:
         raise ValueError(f"Invalid target type: {tgt_type}")
 
+    if cookies_file:
+        cmd += ["--cookies", str(cookies_file)]
 
-def _download(yt_id, tgt_type, output_root_dir, verbose):
+    return cmd
+
+
+def _download(yt_id, tgt_type, output_root_dir, verbose=False, cookies_file=None):
     if len(yt_id) < 4:
-        return DOWNLOAD_RESULT.INVALID_ID, yt_id
+        raise DownloadFailedInvalidId(yt_id)
 
     save_dir = _get_save_dir(yt_id, output_root_dir)
     tmp_dir = tempfile.TemporaryDirectory()
@@ -192,9 +246,9 @@ def _download(yt_id, tgt_type, output_root_dir, verbose):
 
     try:
         if tgt_type in manifest["files"]:
-            return DOWNLOAD_RESULT.EXIST, yt_id
+            return yt_id
 
-        cmd = _get_download_cmd(tgt_type, yt_id, tmp_dir)
+        cmd = _get_download_cmd(tgt_type, yt_id, tmp_dir, cookies_file=cookies_file)
 
         subprocess.run(
             cmd,
@@ -225,10 +279,10 @@ def _download(yt_id, tgt_type, output_root_dir, verbose):
 
         _safely_write_manifest(manifest_file, manifest)
 
-        return DOWNLOAD_RESULT.SUCCESS, yt_id
+        return yt_id
 
     except subprocess.CalledProcessError as e:
-        _clean_save_dir(save_dir, manifest, tgt_type)
+        _clean_save_dir(save_dir)
 
         if verbose:
             print(e)
@@ -239,20 +293,20 @@ def _download(yt_id, tgt_type, output_root_dir, verbose):
 
         last_line = e.stderr.strip().splitlines()[-1].lower()
         if "private" in last_line:
-            return DOWNLOAD_RESULT.FAILED_PRIVATE, yt_id
+            raise DownloadFailedPrivate(yt_id)
         elif "unavailable" in last_line or "available" in last_line:
-            return DOWNLOAD_RESULT.FAILED_UNAVAILABLE, yt_id
+            raise DownloadFailedUnavailable(yt_id)
         elif "removed" in last_line:
-            return DOWNLOAD_RESULT.FAILED_REMOVED, yt_id
+            raise DownloadFailedRemoved(yt_id)
         elif "copyright" in last_line:
-            return DOWNLOAD_RESULT.FAILED_COPYRIGHT, yt_id
+            raise DownloadFailedCopyright(yt_id)
         elif "unsupported" in last_line:
-            return DOWNLOAD_RESULT.FAILED_UNSUPPORTED, yt_id
+            raise DownloadFailedUnsupported(yt_id)
         else:
-            return DOWNLOAD_RESULT.FAILED_OTHER, yt_id
+            raise DownloadFailedOther(yt_id)
 
     except BaseException as e:  # include non-typical exceptions like KeyboardInterrupt
-        _clean_save_dir(save_dir, manifest, tgt_type)
+        _clean_save_dir(save_dir)
         raise e
 
 
@@ -264,12 +318,25 @@ def _safely_write_manifest(manifest_file, manifest, indent=2):
     shutil.move(tmp_file, manifest_file)
 
 
-def _clean_save_dir(save_dir, manifest, tgt_type):
-    if save_dir.exists():
-        for file in save_dir.glob(f"{tgt_type}*"):
+def _clean_save_dir(save_dir):
+    manifest_file = save_dir / "manifest.json"
+
+    if not save_dir.exists():
+        return
+
+    if not manifest_file.exists():
+        shutil.rmtree(save_dir)
+        return
+
+    recorded_files = [manifest_file]
+    manifest = json.loads(manifest_file.read_text())
+
+    for _, file_name in manifest["files"].items():
+        recorded_files.append(save_dir / file_name)
+
+    for file in save_dir.iterdir():
+        if file not in recorded_files:
             file.unlink()
-        if len(list(save_dir.iterdir())) <= 1:  # only manifest.json left
-            shutil.rmtree(save_dir)
 
 
 def _check_download_dependencies():
@@ -372,14 +439,16 @@ def main():
     download_parser.add_argument(
         "--failed_skip_type",
         type=str,
-        default=(  # default: "removed,unavailable,unsupported"
-            f"{DOWNLOAD_RESULT.FAILED_REMOVED.value},"
-            f"{DOWNLOAD_RESULT.FAILED_UNAVAILABLE.value},"
-            f"{DOWNLOAD_RESULT.FAILED_UNSUPPORTED.value}"
+        default=(  # default: "private,removed,unavailable,unsupported"
+            f"{DownloadFailedPrivate.keyword},"
+            f"{DownloadFailedRemoved.keyword},"
+            f"{DownloadFailedUnavailable.keyword},"
+            f"{DownloadFailedUnsupported.keyword}"
         ),
         help="Type of failed downloads to skip. Separated by comma(,)",
     )
     download_parser.add_argument("-v", "--verbose", action="store_true")
+    download_parser.add_argument("--cookies_file", type=Path, help="Path to the cookies file")
 
     # Sanity check subcommand
     sanity_check_parser = subparsers.add_parser(
