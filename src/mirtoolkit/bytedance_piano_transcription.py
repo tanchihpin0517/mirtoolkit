@@ -8,12 +8,7 @@ from pathlib import Path
 import numpy as np
 import torch
 import torchaudio
-from piano_transcription_inference import (
-    PianoTranscription,
-    load_audio,
-    load_audio_stream,
-    sample_rate,
-)
+from piano_transcription_inference import PianoTranscription, load_audio, sample_rate
 
 
 class ByteDancePianoTranscription:
@@ -40,14 +35,12 @@ class ByteDancePianoTranscription:
         """
         if isinstance(file_or_array, (str, Path)):
             audio_path = file_or_array
+            # Load audio
+            (audio_array, _) = load_audio(audio_path, sr=sample_rate, mono=True)
             if stream:
-                # Load audio
-                audio_stream = load_audio_stream(audio_path, sr=sample_rate, mono=True)
                 # Transcribe and write out to MIDI file
-                transcribed_dict = self.model.transcribe_stream(audio_stream, output_midi_file)
+                transcribed_dict = self.model.transcribe_stream(audio_array, output_midi_file)
             else:
-                # Load audio
-                (audio_array, _) = load_audio(audio_path, sr=sample_rate, mono=True)
                 # Transcribe and write out to MIDI file
                 transcribed_dict = self.model.transcribe(audio_array, output_midi_file)
 
